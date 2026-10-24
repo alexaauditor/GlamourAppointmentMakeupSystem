@@ -5,6 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
+import com.scc.model.User;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDao {
 
@@ -274,6 +277,7 @@ public class UserDao {
         }
     }
 
+
     public void viewCustomerInfo(int customerId) {
         String sql = "SELECT user_id, name, username, status FROM Users WHERE user_id = ? AND role = 'CUSTOMER'";
 
@@ -300,6 +304,7 @@ public class UserDao {
         }
     }
 
+
     public int getUserIdByUsername(String username) {
         String sql = "SELECT user_id FROM Users WHERE username = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -314,5 +319,93 @@ public class UserDao {
             System.out.println("Error getting user ID: " + e.getMessage());
         }
         return -1;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+
+        String sql = "SELECT user_id, name, username, password, role, status " +
+                "FROM Users ORDER BY user_id";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                users.add(new User(
+                        rs.getInt("user_id"),
+                        rs.getString("name"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("role"),
+                        rs.getString("status")
+                ));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving users: " + e.getMessage());
+        }
+
+        return users;
+    }
+
+    public List<User> getPendingUsers() {
+        List<User> users = new ArrayList<>();
+
+        String sql = "SELECT user_id, name, username, password, role, status " +
+                "FROM Users WHERE status = ? ORDER BY user_id";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, "PENDING");
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(new User(
+                            rs.getInt("user_id"),
+                            rs.getString("name"),
+                            rs.getString("username"),
+                            rs.getString("password"),
+                            rs.getString("role"),
+                            rs.getString("status")
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving pending users: " + e.getMessage());
+        }
+
+        return users;
+    }
+
+    public boolean approveUser(int userId) {
+        String sql = "UPDATE Users SET status = ? " +
+                "WHERE user_id = ? AND status = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, "APPROVED");
+            pstmt.setInt(2, userId);
+            pstmt.setString(3, "PENDING");
+
+            int rowsUpdated = pstmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("User account approved successfully!");
+                return true;
+            } else {
+                System.out.println(
+                        "No pending account found with User ID: " + userId
+                );
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error approving user: " + e.getMessage());
+            return false;
+        }
     }
 }

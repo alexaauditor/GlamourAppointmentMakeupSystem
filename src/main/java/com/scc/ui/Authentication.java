@@ -1,4 +1,3 @@
-
 package com.scc.ui;
 
 import com.scc.dao.UserDao;
@@ -81,18 +80,35 @@ public class Authentication {
 
         String role = userDao.getUserRole(username);
 
+        // Retrieve the logged-in user's actual database ID
+        int currentUserId = userDao.getUserIdByUsername(username);
+
         if ("ADMIN".equalsIgnoreCase(role)) {
-            AdminMenu adminMenu = new AdminMenu(sc, userDao);
+
+            if (currentUserId == -1) {
+                System.out.println(
+                        "Unable to retrieve administrator account ID."
+                );
+                return;
+            }
+
+            AdminMenu adminMenu =
+                    new AdminMenu(sc, userDao, currentUserId);
+
             adminMenu.show();
 
         } else if ("MAKEUP_ARTIST".equalsIgnoreCase(role)) {
+
             MakeupArtistMenu artistMenu =
                     new MakeupArtistMenu(sc, userDao, username);
+
             artistMenu.show();
 
         } else if ("CUSTOMER".equalsIgnoreCase(role)) {
+
             CustomerMenu customerMenu =
                     new CustomerMenu(sc, userDao, username);
+
             customerMenu.show();
 
         } else {

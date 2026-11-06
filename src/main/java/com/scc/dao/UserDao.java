@@ -321,6 +321,7 @@ public class UserDao {
         return -1;
     }
 
+
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
 
@@ -348,6 +349,7 @@ public class UserDao {
 
         return users;
     }
+
 
     public List<User> getPendingUsers() {
         List<User> users = new ArrayList<>();
@@ -380,6 +382,7 @@ public class UserDao {
         return users;
     }
 
+
     public boolean approveUser(int userId) {
         String sql = "UPDATE Users SET status = ? " +
                 "WHERE user_id = ? AND status = ?";
@@ -405,6 +408,59 @@ public class UserDao {
 
         } catch (SQLException e) {
             System.out.println("Error approving user: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    public boolean updateUserRoleAndStatus(
+            int userId, String newRole, String newStatus) {
+
+        if (newRole == null || newStatus == null) {
+            System.out.println("Role and status cannot be empty.");
+            return false;
+        }
+
+        String normalizedRole = newRole.trim().toUpperCase(Locale.ROOT);
+        String normalizedStatus = newStatus.trim().toUpperCase(Locale.ROOT);
+
+        if (!normalizedRole.equals("ADMIN")
+                && !normalizedRole.equals("CUSTOMER")
+                && !normalizedRole.equals("MAKEUP_ARTIST")) {
+            System.out.println("Invalid user role.");
+            return false;
+        }
+
+        if (!normalizedStatus.equals("APPROVED")
+                && !normalizedStatus.equals("PENDING")) {
+            System.out.println("Invalid account status.");
+            return false;
+        }
+
+        String sql = "UPDATE Users SET role = ?, status = ? " +
+                "WHERE user_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, normalizedRole);
+            pstmt.setString(2, normalizedStatus);
+            pstmt.setInt(3, userId);
+
+            int rowsUpdated = pstmt.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("User account updated successfully!");
+                return true;
+            }
+
+            System.out.println("User ID not found.");
+            return false;
+
+        } catch (SQLException e) {
+            System.out.println(
+                    "Error updating user account: " + e.getMessage()
+            );
             return false;
         }
     }

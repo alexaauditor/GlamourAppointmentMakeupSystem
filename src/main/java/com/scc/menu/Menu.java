@@ -4,6 +4,7 @@ import com.scc.dao.UserDao;
 import java.util.Scanner;
 import com.scc.menu.AdminMenu;
 import com.scc.menu.CustomerMenu;
+import com.scc.menu.MakeupArtistMenu;
 
 public class Menu {
 
@@ -14,9 +15,9 @@ public class Menu {
         boolean running = true;
 
         while (running) {
-            System.out.println("\n===================================");
+            System.out.println("\n====================================");
             System.out.println(" GLAMOURA MAKEUP APPOINTMENT SYSTEM");
-            System.out.println("===================================");
+            System.out.println("====================================");
             System.out.println("1. Login");
             System.out.println("2. Register");
             System.out.println("3. Exit");
@@ -70,8 +71,30 @@ public class Menu {
 
             if ("ADMIN".equalsIgnoreCase(role)) {
 
-                AdminMenu adminMenu = new AdminMenu(sc, userDao);
+                int currentUserId = userDao.getUserIdByUsername(username);
+
+                if (currentUserId == -1) {
+                    System.out.println("Unable to retrieve admin account ID.");
+                    return;
+                }
+
+                AdminMenu adminMenu = new AdminMenu(sc, userDao, currentUserId);
                 adminMenu.show();
+
+            } else if ("MAKEUP_ARTIST".equalsIgnoreCase(role)) {
+
+                MakeupArtistMenu artistMenu =
+                        new MakeupArtistMenu(sc, userDao, username);
+                artistMenu.show();
+
+            } else if ("CUSTOMER".equalsIgnoreCase(role)) {
+
+                CustomerMenu customerMenu =
+                        new CustomerMenu(sc, userDao, username);
+                customerMenu.show();
+
+            } else {
+                System.out.println("Unable to determine your account role.");
             }
         }
     }
